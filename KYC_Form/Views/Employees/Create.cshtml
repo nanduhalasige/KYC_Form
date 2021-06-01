@@ -1,0 +1,162 @@
+﻿@model KYC_Form.Models.Employee
+
+@{
+    ViewData["Title"] = "Create";
+}
+
+<h1 class="text-center">Employee KYC Form</h1>
+
+<hr />
+<div class="container">
+    <div class="row">
+        <div class="col-md-12">
+            <form id="kycCreateForm">
+                <div class="row">
+                    <div class="col">
+                        <div class="form-group">
+                            <div class="row m-4">
+                                <div class="col-4 d-flex">
+                                    <label asp-for="ClientType" class="control-label font-weight-bold align-self-center justify-content-center"></label>
+                                </div>
+                                <div class="col-8">
+                                    <div class="form-check form-check-inline">
+                                        <input type="radio" name="ClientType" asp-for="ClientType" value="New" checked="checked"
+                                               id="New" class="input-hidden" />
+                                        <label for="New" class="mr-3">
+                                            <img src="~/asset/new.svg"
+                                                 alt="New" />
+                                        </label>
+                                        <input type="radio" name="ClientType" asp-for="ClientType" value="Existing"
+                                               id="Existing" class="input-hidden" />
+                                        <label for="Existing">
+                                            <img src="~/asset/existing.svg"
+                                                 alt="Existing" />
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr />
+                        <div class="form-group">
+                            <div class="row m-4">
+                                <div class="col-4 d-flex">
+                                    <label asp-for="Gender" class="control-label font-weight-bold align-self-center justify-content-center"></label>
+                                </div>
+                                <div class="col-8">
+                                    <div class="form-check form-check-inline">
+                                        <input type="radio" name="Gender" asp-for="Gender" value="Male" checked="checked"
+                                               id="Male" class="input-hidden" />
+                                        <label for="Male" class="mr-3">
+                                            <img src="~/asset/male.svg"
+                                                 alt="Male" />
+                                        </label>
+                                        <input type="radio" name="Gender" asp-for="Gender" value="Female"
+                                               id="Female" class="input-hidden" />
+                                        <label for="Female">
+                                            <img src="~/asset/female.svg"
+                                                 alt="Male" />
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="form-group">
+                            <label asp-for="Title" class="control-label required"></label>
+                            <select asp-for="Title" asp-items="@Html.GetEnumSelectList<Title>()" required id="titleOption" class="custom-select form-control w-25">
+                                <option value="" selected="selected">Title</option>
+                            </select>
+                            <span asp-validation-for="Title" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="FirstName" class="control-label required"></label>
+                            <input asp-for="FirstName" class="form-control" maxlength="50" id="firstName" />
+                            <span asp-validation-for="FirstName" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="LastName" class="control-label required"></label>
+                            <input asp-for="LastName" class="form-control" maxlength="50" id="lastName" />
+                            <span asp-validation-for="LastName" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="Email" class="control-label required"></label>
+                            <input asp-for="Email" class="form-control" maxlength="50" id="email" />
+                            <span asp-validation-for="Email" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="MobileNumber" class="control-label"></label>
+                            <input asp-for="MobileNumber" maxlength="10" class="form-control" id="mobileNo" />
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group d-flex">
+                    <input type="submit" id="kycFormSubmit" value="Create" class="btn btn-primary" />
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div>
+        <a asp-action="Index">Back to List</a>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+
+        $(document).ready(function () {
+            $("#kycFormSubmit").click(function (e) {
+                //Serialize the form datas.
+                e.preventDefault();
+                var valdata = $("#kycCreateForm").serialize();
+
+                if ($("#kycCreateForm").valid()) {
+                    $.ajax({
+                        url: "/Employees/InsertNewKYC",
+                        type: "POST",
+                        dataType: 'json',
+                        contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+                        data: valdata,
+                        success: function (data) {
+                            if (data.message == 'Success') {
+                                toastr.success("New Employee added successfully");
+                                window.location.href = "/Employees/Index";
+                            }
+                            else if (data.modelStateValid == false) {
+                                toastr.error('Some data is not correct');
+                                event.preventDefault();
+                                assignValuesToFields(data.data);
+                            }
+                            else {
+                                event.preventDefault();
+                                toastr.error('Failed to add new Employee');
+                            }
+                        },
+                        error: function (error) {
+                            toastr.error(error.status);
+                            if (error.modelStateValid == 'False') {
+                                assignValuesToFields(data.data);
+                            }
+                        }
+                    });
+                }
+            });
+        });
+
+        function assignValuesToFields(data) {
+            $("#firstName").val(data.firstName);
+            $("#lastName").val(data.lastName);
+            $("#email").val(data.email);
+            $("#mobileNo").val(data.mobileNumber);
+            $("#titleOption option").filter(function () {
+                return this.text == data.title;
+            }).attr('selected', true);
+            $("input[name=Gender][value=" + data.gender + "]").prop('checked', true);
+            $("input[name=ClientType][value=" + data.clientType + "]").prop('checked', true);
+        }
+    </script>
+
+}
